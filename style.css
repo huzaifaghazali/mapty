@@ -157,7 +157,7 @@ a:visited {
   gap: 0.5rem 2.5rem;
 
   /* Match height and activity boxes */
-  height: 9.25rem;
+  height: 12.25rem;
   transition: all 0.5s, transform 1ms;
 }
 
@@ -226,6 +226,24 @@ a:visited {
 .form__btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 5px rgba(255, 181, 69, 0.3);
+}
+
+.workout__delete-btn {
+  background: none;
+  border: none;
+  color: var(--color-light--1);
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.2s;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+.workout__delete-btn:hover {
+  color: #ff4d4d;
+  transform: scale(1.1);
+  background-color: rgba(255, 77, 77, 0.1);
 }
 
 .copyright {

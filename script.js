@@ -359,6 +359,7 @@ class App {
     html += `
       <div class="workout__actions">
         <button class="workout__edit-btn">✏️ Edit</button>
+        <button class="workout__delete-btn">🗑 Delete</button>
       </div>
     </li>
     `;
@@ -387,32 +388,34 @@ class App {
       popup.getElement().className = `leaflet-popup ${workout.type}-popup`;
     }
   }
+
   _handleWorkoutClick(e) {
     const workoutEl = e.target.closest('.workout');
     if (!workoutEl) return;
 
-    // Check if edit button was clicked
+    const workoutId = workoutEl.dataset.id;
+
+    // Handle Edit
     if (e.target.closest('.workout__edit-btn')) {
-      this._editWorkout(workoutEl.dataset.id);
+      this._editWorkout(workoutId);
       return;
     }
 
-    // Otherwise, move to popup
-    if (!this.#map) return;
+    // Handle Delete
+    if (e.target.closest('.workout__delete-btn')) {
+      this._deleteWorkout(workoutId);
+      return;
+    }
 
-    const workout = this.#workouts.find(
-      (work) => work.id === workoutEl.dataset.id
-    );
+    // Handle map pan (default click on workout)
+    if (!this.#map) return;
+    const workout = this.#workouts.find((work) => work.id === workoutId);
+    if (!workout) return;
 
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
-      pan: {
-        duration: 1,
-      },
+      pan: { duration: 1 },
     });
-
-    // using the public interface
-    // workout.click();
   }
 
   _editWorkout(id) {
@@ -449,6 +452,33 @@ class App {
     // Show the form
     form.classList.remove('hidden');
     inputDistance.focus();
+  }
+
+  _deleteWorkout(id) {
+    // 1. Remove from array
+    const index = this.#workouts.findIndex((work) => work.id === id);
+    if (index === -1) return;
+
+    this.#workouts.splice(index, 1);
+
+    // 2. Remove from DOM
+    const workoutEl = document.querySelector(`.workout[data-id="${id}"]`);
+    if (workoutEl) workoutEl.remove();
+
+    // 3. Remove marker from map
+    const marker = this.#markers.get(id);
+    if (marker) {
+      this.#map.removeLayer(marker);
+      this.#markers.delete(id);
+    }
+
+    // 4. Update localStorage
+    this._setLocalStorage();
+
+    // Optional: if currently editing this workout, reset edit state
+    if (this.#editingId === id) {
+      this.#editingId = null;
+    }
   }
 
   _setLocalStorage() {
