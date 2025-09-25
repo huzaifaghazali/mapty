@@ -76,10 +76,19 @@ a:visited {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 0.75rem 1.5rem;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
+
+.workout:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
 .workout--running {
   border-left: 5px solid var(--color-brand--2);
 }
+
 .workout--cycling {
   border-left: 5px solid var(--color-brand--1);
 }
@@ -111,6 +120,30 @@ a:visited {
   color: var(--color-light--1);
   text-transform: uppercase;
   font-weight: 800;
+}
+
+.workout__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.workout__edit-btn {
+  background: none;
+  border: none;
+  color: var(--color-light--1);
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.2s;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+}
+
+.workout__edit-btn:hover {
+  color: var(--color-light--2);
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .form {
@@ -165,10 +198,34 @@ a:visited {
 .form__input:focus {
   outline: none;
   background-color: #fff;
+  box-shadow: 0 0 0 2px var(--color-brand--1);
 }
 
 .form__btn {
-  display: none;
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 0.5rem;
+  padding: 0.8rem 2.5rem;
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  background-color: var(--color-brand--1);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.form__btn:hover {
+  background-color: #ff9a00;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(255, 181, 69, 0.3);
+}
+
+.form__btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(255, 181, 69, 0.3);
 }
 
 .copyright {
