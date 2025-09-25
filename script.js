@@ -72,6 +72,7 @@ class App {
   #mapEvent;
   #workouts = [];
   #editingId = null; // Track which workout is being edited
+  #markers = new Map();
 
   constructor() {
     // Get user's position
@@ -289,7 +290,7 @@ class App {
   }
 
   _renderWorkoutMarker(workout) {
-    L.marker(workout.coords)
+    const marker = L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
         L.popup({
@@ -304,6 +305,8 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
+
+    this.#markers.set(workout.id, marker);
   }
 
   _renderWorkout(workout) {
@@ -363,29 +366,27 @@ class App {
     form.insertAdjacentHTML('afterend', html);
   }
 
+  // Update _updateWorkout to only update the specific marker
   _updateWorkout(index) {
-    // Remove the old workout element from the DOM
-    const oldWorkoutEl = document.querySelector(
-      `.workout[data-id="${this.#workouts[index].id}"]`
-    );
-    if (oldWorkoutEl) oldWorkoutEl.remove();
+    const workout = this.#workouts[index];
 
-    // Render the updated workout
-    this._renderWorkout(this.#workouts[index]);
+    // Update DOM element
+    const oldEl = document.querySelector(`.workout[data-id="${workout.id}"]`);
+    if (oldEl) oldEl.remove();
+    this._renderWorkout(workout);
 
-    // Update the marker on the map
-    // Remove all markers and re-render them
-    this.#map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        this.#map.removeLayer(layer);
-      }
-    });
+    // Update ONLY the specific marker
+    const marker = this.#markers.get(workout.id);
+    if (marker) {
+      marker.setPopupContent(
+        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
+      );
 
-    this.#workouts.forEach((work) => {
-      this._renderWorkoutMarker(work);
-    });
+      // If type changed, update the popup class
+      const popup = marker.getPopup();
+      popup.getElement().className = `leaflet-popup ${workout.type}-popup`;
+    }
   }
-
   _handleWorkoutClick(e) {
     const workoutEl = e.target.closest('.workout');
     if (!workoutEl) return;
