@@ -65,6 +65,7 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
+const deleteAllBtn = document.querySelector('.delete-all-btn');
 
 class App {
   #map;
@@ -88,6 +89,7 @@ class App {
       'click',
       this._handleWorkoutClick.bind(this)
     );
+    deleteAllBtn.addEventListener('click', this._deleteAllWorkouts.bind(this));
   }
 
   _getPosition() {
@@ -478,6 +480,44 @@ class App {
     // Optional: if currently editing this workout, reset edit state
     if (this.#editingId === id) {
       this.#editingId = null;
+    }
+  }
+
+  _deleteAllWorkouts() {
+    if (this.#workouts.length === 0) return;
+
+    // Optional: add confirmation (recommended for safety)
+    if (
+      !confirm(
+        'Are you sure you want to delete all workouts? This cannot be undone.'
+      )
+    ) {
+      return;
+    }
+
+    // 1. Remove all markers from the map
+    this.#markers.forEach((marker) => {
+      this.#map.removeLayer(marker);
+    });
+
+    // 2. Clear the markers Map
+    this.#markers.clear();
+
+    // 3. Clear workouts array
+    this.#workouts = [];
+
+    // 4. Remove all workout elements from DOM
+    document.querySelectorAll('.workout').forEach((el) => el.remove());
+
+    // 5. Reset editing state
+    this.#editingId = null;
+
+    // 6. Update localStorage
+    this._setLocalStorage();
+
+    // Optional: hide form if visible
+    if (!form.classList.contains('hidden')) {
+      this._hideForm();
     }
   }
 
