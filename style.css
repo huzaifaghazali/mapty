@@ -89,6 +89,41 @@ a:visited {
   box-shadow: 0 2px 5px rgba(255, 181, 69, 0.4);
 }
 
+/* MAP CONTROLS */
+.map-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.fit-all-btn {
+  padding: 0.6rem 1.2rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.3rem;
+  background-color: var(--color-dark--2);
+  color: var(--color-light--1);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fit-all-btn:hover {
+  background-color: var(--color-dark--2);
+  color: var(--color-light--2);
+  transform: translateY(-2px);
+}
+
+.fit-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .workouts {
   list-style: none;
   height: 77vh;

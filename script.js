@@ -95,6 +95,14 @@ class App {
     document
       .querySelector('.sort-controls')
       .addEventListener('click', this._handleSort.bind(this));
+
+    // NEW: Fit all workouts button
+    const fitAllBtn = document.querySelector('.fit-all-btn');
+    if (fitAllBtn) {
+      fitAllBtn.addEventListener('click', this._fitAllWorkouts.bind(this));
+      // Disable initially (will enable when workouts exist)
+      fitAllBtn.disabled = true;
+    }
   }
 
   // ===== MODAL UTILITY METHODS =====
@@ -272,6 +280,31 @@ class App {
     this.#workouts.forEach((work) => {
       this._renderWorkoutMarker(work);
     });
+  }
+
+  _fitAllWorkouts() {
+    if (!this.#map || this.#workouts.length === 0) return;
+
+    // Create a Leaflet LatLngBounds object
+    const bounds = L.latLngBounds();
+
+    // Extend bounds to include all workout coordinates
+    this.#workouts.forEach((workout) => {
+      bounds.extend(workout.coords);
+    });
+
+    // Fit the map to the bounds with padding
+    this.#map.fitBounds(bounds, {
+      padding: [50, 50], // Padding in pixels (top/bottom, left/right)
+      maxZoom: 16, // Prevent excessive zoom if only 1 workout
+    });
+  }
+
+  _updateFitAllButton() {
+    const fitAllBtn = document.querySelector('.fit-all-btn');
+    if (fitAllBtn) {
+      fitAllBtn.disabled = this.#workouts.length === 0;
+    }
   }
 
   _showForm(mapE) {
@@ -472,6 +505,8 @@ class App {
 
     // Set local storage to all workouts
     this._setLocalStorage();
+
+    this._updateFitAllButton();
   }
 
   _renderWorkoutMarker(workout) {
@@ -664,6 +699,8 @@ class App {
     // 4. Update localStorage
     this._setLocalStorage();
 
+    this._updateFitAllButton();
+
     // Optional: if currently editing this workout, reset edit state
     if (this.#editingId === id) {
       this.#editingId = null;
@@ -703,6 +740,8 @@ class App {
 
         // 6. Update localStorage
         this._setLocalStorage();
+
+        this._updateFitAllButton();
 
         // Optional: hide form if visible
         if (!form.classList.contains('hidden')) {
@@ -769,6 +808,7 @@ class App {
         dateSortBtn.innerHTML += ' ↓';
       }
       this._renderWorkoutsSorted();
+      this._updateFitAllButton();
     }
   }
 
