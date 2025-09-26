@@ -97,6 +97,70 @@ class App {
       .addEventListener('click', this._handleSort.bind(this));
   }
 
+  // ===== MODAL UTILITY METHODS =====
+  _showModal(
+    title,
+    message,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    onConfirm
+  ) {
+    const overlay = document.querySelector('.modal-overlay');
+    const titleEl = overlay.querySelector('.modal__title');
+    const contentEl = overlay.querySelector('.modal__content');
+    const confirmBtn = overlay.querySelector('.modal__btn--confirm');
+    const cancelBtn = overlay.querySelector('.modal__btn--cancel');
+    const closeBtn = overlay.querySelector('.modal__close');
+
+    // Set content
+    titleEl.textContent = title;
+    contentEl.textContent = message;
+    confirmBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
+
+    // Show modal
+    overlay.classList.remove('hidden');
+
+    // Handle confirm
+    const handleConfirm = () => {
+      onConfirm();
+      this._hideModal();
+    };
+
+    // Handle cancel/close
+    const handleCancel = () => {
+      this._hideModal();
+    };
+
+    // Attach listeners (remove previous to avoid duplicates)
+    confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+    closeBtn.replaceWith(closeBtn.cloneNode(true));
+
+    overlay
+      .querySelector('.modal__btn--confirm')
+      .addEventListener('click', handleConfirm);
+    overlay
+      .querySelector('.modal__btn--cancel')
+      .addEventListener('click', handleCancel);
+    overlay
+      .querySelector('.modal__close')
+      .addEventListener('click', handleCancel);
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        handleCancel();
+        window.removeEventListener('keydown', handleEscape);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+  }
+
+  _hideModal() {
+    document.querySelector('.modal-overlay').classList.add('hidden');
+  }
+
   _renderWorkoutsSorted() {
     if (!this.#workouts.length) return;
 
@@ -178,12 +242,15 @@ class App {
 
   _getPosition() {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        this._loadMap.bind(this),
-        function () {
-          alert('Could not get your position');
-        }
-      );
+      navigator.geolocation.getCurrentPosition(this._loadMap.bind(this), () => {
+        this._showModal(
+          'Location Access Denied',
+          'Could not get your position. Please enable location services and refresh the page.',
+          'OK',
+          null,
+          () => {}
+        );
+      });
     }
   }
 
@@ -271,7 +338,14 @@ class App {
             !validInputs(distance, duration, cadence) ||
             !allPositive(distance, duration, cadence)
           ) {
-            return alert('Inputs have to be positive numbers!');
+            this._showModal(
+              'Invalid Input',
+              'All inputs must be positive numbers.',
+              'OK',
+              null,
+              () => {} // No-op confirm
+            );
+            return;
           }
 
           // If changing type, create a new workout object
@@ -297,7 +371,14 @@ class App {
             !validInputs(distance, duration, elevation) ||
             !allPositive(distance, duration)
           ) {
-            return alert('Inputs have to be positive numbers!');
+            this._showModal(
+              'Invalid Input',
+              'All inputs must be positive numbers.',
+              'OK',
+              null,
+              () => {} // No-op confirm
+            );
+            return;
           }
 
           // If changing type , create a new workout object
@@ -339,7 +420,14 @@ class App {
         !validInputs(distance, duration, cadence) ||
         !allPositive(distance, duration, cadence)
       ) {
-        return alert('Inputs have to be positive numbers!');
+        this._showModal(
+          'Invalid Input',
+          'All inputs must be positive numbers.',
+          'OK',
+          null,
+          () => {} // No-op confirm
+        );
+        return;
       }
 
       workout = new Running([lat, lng], distance, duration, cadence);
@@ -353,7 +441,14 @@ class App {
         !validInputs(distance, duration, elevation) ||
         !allPositive(distance, duration)
       ) {
-        return alert('Inputs have to be positive numbers!');
+        this._showModal(
+          'Invalid Input',
+          'All inputs must be positive numbers.',
+          'OK',
+          null,
+          () => {} // No-op confirm
+        );
+        return;
       }
 
       workout = new Cycling([lat, lng], distance, duration, elevation);
@@ -583,42 +678,43 @@ class App {
     if (this.#workouts.length === 0) return;
 
     // Optional: add confirmation (recommended for safety)
-    if (
-      !confirm(
-        'Are you sure you want to delete all workouts? This cannot be undone.'
-      )
-    ) {
-      return;
-    }
+    this._showModal(
+      'Delete All Workouts?',
+      'This will permanently delete all your workouts. This action cannot be undone.',
+      'Delete All',
+      'Cancel',
+      () => {
+        // 1. Remove all markers from the map
+        this.#markers.forEach((marker) => {
+          this.#map.removeLayer(marker);
+        });
 
-    // 1. Remove all markers from the map
-    this.#markers.forEach((marker) => {
-      this.#map.removeLayer(marker);
-    });
+        // 2. Clear the markers Map
+        this.#markers.clear();
 
-    // 2. Clear the markers Map
-    this.#markers.clear();
+        // 3. Clear workouts array
+        this.#workouts = [];
 
-    // 3. Clear workouts array
-    this.#workouts = [];
+        // 4. Remove all workout elements from DOM
+        document.querySelectorAll('.workout').forEach((el) => el.remove());
 
-    // 4. Remove all workout elements from DOM
-    document.querySelectorAll('.workout').forEach((el) => el.remove());
+        // 5. Reset editing state
+        this.#editingId = null;
 
-    // 5. Reset editing state
-    this.#editingId = null;
+        // 6. Update localStorage
+        this._setLocalStorage();
 
-    // 6. Update localStorage
-    this._setLocalStorage();
+        // Optional: hide form if visible
+        if (!form.classList.contains('hidden')) {
+          this._hideForm();
+        }
 
-    // Optional: hide form if visible
-    if (!form.classList.contains('hidden')) {
-      this._hideForm();
-    }
-
-    if (this.#sortField && this.#workouts.length > 0) {
-      this._renderWorkoutsSorted();
-    }
+        if (this.#sortField && this.#workouts.length > 0) {
+          this._renderWorkoutsSorted();
+        }
+      }
+    );
+    return;
   }
 
   _setLocalStorage() {
