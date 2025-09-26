@@ -74,6 +74,8 @@ class App {
   #workouts = [];
   #editingId = null; // Track which workout is being edited
   #markers = new Map();
+  #sortField = null; // e.g 'distance'
+  #sortDirection = 'desc'; // 'asc' or 'desc'
 
   constructor() {
     // Get user's position
@@ -90,6 +92,88 @@ class App {
       this._handleWorkoutClick.bind(this)
     );
     deleteAllBtn.addEventListener('click', this._deleteAllWorkouts.bind(this));
+    document
+      .querySelector('.sort-controls')
+      .addEventListener('click', this._handleSort.bind(this));
+  }
+
+  _renderWorkoutsSorted() {
+    if (!this.#workouts.length) return;
+
+    // Clone and sort
+    const sortedWorkouts = [...this.#workouts].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (this.#sortField) {
+        case 'date':
+          aValue = a.date.getTime();
+          bValue = b.date.getTime();
+          break;
+        case 'distance':
+          aValue = a.distance;
+          bValue = b.distance;
+          break;
+        case 'duration':
+          aValue = a.duration;
+          bValue = b.duration;
+          break;
+        case 'value':
+          // For consistent "higher is better":
+          // - Running: use -pace (so lower pace = higher value)
+          // - Cycling: use speed
+          aValue = a.type === 'running' ? -a.pace : a.speed;
+          bValue = b.type === 'running' ? -b.pace : b.speed;
+          break;
+        default:
+          return 0;
+      }
+
+      // Apply direction
+      const direction = this.#sortDirection === 'asc' ? 1 : -1;
+      if (aValue < bValue) return -1 * direction;
+      if (aValue > bValue) return 1 * direction;
+      return 0;
+    });
+
+    // Clear current list (keep form and delete-all)
+    document.querySelectorAll('.workout').forEach((el) => el.remove());
+
+    // Re-render in sorted order
+    sortedWorkouts.forEach((workout) => {
+      this._renderWorkout(workout);
+    });
+  }
+
+  _handleSort(e) {
+    const btn = e.target.closest('.sort-btn');
+    if (!btn) return;
+
+    const sortField = btn.dataset.sort;
+
+    // Toggle direction if same field, else reset to desc
+    if (this.#sortField === sortField) {
+      this.#sortDirection = this.#sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.#sortField = sortField;
+      this.#sortDirection = 'desc'; // Default: highest first
+    }
+
+    // Update active button UI
+    document
+      .querySelectorAll('.sort-btn')
+      .forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update button text to show direction (optional but helpful)
+    const directionSymbol = this.#sortDirection === 'asc' ? ' ↑' : ' ↓';
+    // btn.innerHTML = btn.innerHTML.replace(/ [↑↓]$/, '') + directionSymbol;
+    // Remove any existing direction symbols
+    btn.innerHTML = btn.innerHTML.replace(/[↑↓]/g, '').trim();
+    // Add the new direction symbol
+    btn.innerHTML += directionSymbol;
+
+    // Re-render list
+    this._renderWorkoutsSorted();
   }
 
   _getPosition() {
@@ -282,7 +366,11 @@ class App {
     this._renderWorkoutMarker(workout);
 
     // Render workout on list
-    this._renderWorkout(workout);
+    if (this.#sortField) {
+      this._renderWorkoutsSorted();
+    } else {
+      this._renderWorkout(workout);
+    }
 
     // Hide form + clear input fields
     this._hideForm();
@@ -374,9 +462,13 @@ class App {
     const workout = this.#workouts[index];
 
     // Update DOM element
-    const oldEl = document.querySelector(`.workout[data-id="${workout.id}"]`);
-    if (oldEl) oldEl.remove();
-    this._renderWorkout(workout);
+    if (this.#sortField) {
+      this._renderWorkoutsSorted();
+    } else {
+      const oldEl = document.querySelector(`.workout[data-id="${workout.id}"]`);
+      if (oldEl) oldEl.remove();
+      this._renderWorkout(workout);
+    }
 
     // Update ONLY the specific marker
     const marker = this.#markers.get(workout.id);
@@ -481,6 +573,10 @@ class App {
     if (this.#editingId === id) {
       this.#editingId = null;
     }
+
+    if (this.#sortField && this.#workouts.length > 0) {
+      this._renderWorkoutsSorted();
+    }
   }
 
   _deleteAllWorkouts() {
@@ -518,6 +614,10 @@ class App {
     // Optional: hide form if visible
     if (!form.classList.contains('hidden')) {
       this._hideForm();
+    }
+
+    if (this.#sortField && this.#workouts.length > 0) {
+      this._renderWorkoutsSorted();
     }
   }
 
@@ -563,6 +663,17 @@ class App {
     this.#workouts.forEach((work) => {
       this._renderWorkout(work);
     });
+
+    if (this.#workouts.length > 0) {
+      this.#sortField = 'date';
+      this.#sortDirection = 'desc';
+      const dateSortBtn = document.querySelector('.sort-btn[data-sort="date"]');
+      if (dateSortBtn) {
+        dateSortBtn.classList.add('active');
+        dateSortBtn.innerHTML += ' ↓';
+      }
+      this._renderWorkoutsSorted();
+    }
   }
 
   reset() {
