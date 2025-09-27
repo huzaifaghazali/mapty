@@ -19,6 +19,13 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
+
+    <!-- Add to your head section -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
+    />
+
     <script
       defer
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -26,6 +33,10 @@
       crossorigin=""
     ></script>
 
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
+    ></script>
     <script defer src="script.js"></script>
     <title>mapty // Map your workouts</title>
   </head>
@@ -38,6 +49,15 @@
         <button class="sort-btn" data-sort="distance">📏 Distance</button>
         <button class="sort-btn" data-sort="duration">⏱ Duration</button>
         <button class="sort-btn" data-sort="value">⚡ Pace/Speed</button>
+      </div>
+
+      <!-- Add after the sort-controls div -->
+      <div class="draw-controls">
+        <button class="draw-btn" data-draw="marker">📍 Marker</button>
+        <button class="draw-btn" data-draw="polyline">📏 Line</button>
+        <button class="draw-btn" data-draw="polygon">🔷 Polygon</button>
+        <button class="draw-btn" data-draw="rectangle">⬜ Rectangle</button>
+        <button class="draw-btn" data-draw="circle">⭕ Circle</button>
       </div>
 
       <div class="map-controls">

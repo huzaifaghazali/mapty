@@ -4,11 +4,13 @@ class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10);
   clicks = 0;
+  shapeType = 'marker'; // New property: 'marker', 'polyline', 'polygon', 'rectangle', 'circle'
 
-  constructor(coords, distance, duration) {
+  constructor(coords, distance, duration, shapeType = 'marker') {
     this.coords = coords; // [lat, lng]
     this.distance = distance; // in km
     this.duration = duration; // in min
+    this.shapeType = shapeType; // Type of shape drawn
   }
 
   _setDescription() {
@@ -77,6 +79,11 @@ class App {
   #sortField = null; // e.g 'distance'
   #sortDirection = 'desc'; // 'asc' or 'desc'
 
+  #drawControl; // Leaflet draw control
+  #drawnItems; // Layer group for drawn items
+  #currentDrawType = 'marker'; // Current drawing tool selected
+  #currentShape; // C
+
   constructor() {
     // Get user's position
     this._getPosition();
@@ -103,6 +110,10 @@ class App {
       // Disable initially (will enable when workouts exist)
       fitAllBtn.disabled = true;
     }
+
+    document
+      .querySelector('.draw-controls')
+      .addEventListener('click', this._handleDrawControl.bind(this));
   }
 
   // ===== MODAL UTILITY METHODS =====
@@ -277,9 +288,229 @@ class App {
     // Handling clicks on map
     this.#map.on('click', this._showForm.bind(this));
 
-    this.#workouts.forEach((work) => {
-      this._renderWorkoutMarker(work);
+    // Initialize the FeatureGroup to store editable layers
+    this.#drawnItems = new L.FeatureGroup();
+    this.#map.addLayer(this.#drawnItems);
+
+    // Initialize the draw control and pass it the FeatureGroup
+    this.#drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: this.#drawnItems,
+        remove: true,
+      },
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          showArea: true,
+        },
+        // We'll control which tool is active through our UI
+        polyline: false,
+        polygon: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+      },
     });
+
+    // Don't add the draw control to the map yet
+    // We'll activate specific tools based on user selection
+
+    // Handle map events for created shapes
+    this.#map.on(L.Draw.Event.CREATED, this._shapeCreated.bind(this));
+    this.#map.on(L.Draw.Event.EDITED, this._shapeEdited.bind(this));
+    this.#map.on(L.Draw.Event.DELETED, this._shapeDeleted.bind(this));
+
+    // Now that the map is loaded, render all workout shapes
+    this.#workouts.forEach((work) => {
+      this._renderWorkoutShape(work);
+    });
+
+    // Also render the workout list
+    this.#workouts.forEach((work) => {
+      this._renderWorkout(work);
+    });
+
+    // Set up sorting if we have workouts
+    if (this.#workouts.length > 0) {
+      const dateSortBtn = document.querySelector('.sort-btn[data-sort="date"]');
+      if (dateSortBtn) {
+        dateSortBtn.classList.add('active');
+        dateSortBtn.innerHTML += ' ↓';
+      }
+      this._renderWorkoutsSorted();
+      this._updateFitAllButton();
+    }
+  }
+
+  _handleDrawControl(e) {
+    const btn = e.target.closest('.draw-btn');
+    if (!btn) return;
+
+    const drawType = btn.dataset.draw;
+
+    // Update active button UI
+    document
+      .querySelectorAll('.draw-btn')
+      .forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Remove any existing draw control
+    if (this.#drawControl) {
+      this.#map.removeControl(this.#drawControl);
+    }
+
+    // Set current draw type
+    this.#currentDrawType = drawType;
+
+    // Configure the draw control based on selected type
+    const drawOptions = {
+      edit: {
+        featureGroup: this.#drawnItems,
+        remove: true,
+      },
+      draw: {
+        polyline: drawType === 'polyline',
+        polygon: drawType === 'polygon',
+        rectangle: drawType === 'rectangle',
+        circle: drawType === 'circle',
+        marker: drawType === 'marker',
+        // Disable other tools
+        circlemarker: false,
+      },
+    };
+
+    // Add the configured draw control
+    this.#drawControl = new L.Control.Draw(drawOptions);
+    this.#map.addControl(this.#drawControl);
+
+    // Show form if not already visible
+    if (form.classList.contains('hidden')) {
+      form.classList.remove('hidden');
+      inputDistance.focus();
+    }
+  }
+
+  _shapeCreated(e) {
+    const layer = e.layer;
+    const type = e.layerType;
+
+    // Add the shape to the drawn items layer
+    this.#drawnItems.addLayer(layer);
+
+    // Store the current shape
+    this.#currentShape = {
+      type: type,
+      layer: layer,
+    };
+
+    // Extract coordinates based on shape type
+    let coords;
+    switch (type) {
+      case 'marker':
+        coords = [layer.getLatLng().lat, layer.getLatLng().lng];
+        break;
+      case 'polyline':
+        coords = layer.getLatLngs().map((ll) => [ll.lat, ll.lng]);
+        break;
+      case 'polygon':
+        coords = layer.getLatLngs()[0].map((ll) => [ll.lat, ll.lng]);
+        break;
+      case 'rectangle':
+        const bounds = layer.getBounds();
+        coords = [
+          [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+          [bounds.getNorthEast().lat, bounds.getNorthEast().lng],
+        ];
+        break;
+      case 'circle':
+        coords = [layer.getLatLng().lat, layer.getLatLng().lng];
+        break;
+    }
+
+    // Store the shape data for when the form is submitted
+    this.#mapEvent = {
+      latlng: {
+        lat: coords[0][0] || coords[0],
+        lng: coords[0][1] || coords[1],
+      },
+    };
+
+    // Show the form
+    form.classList.remove('hidden');
+    inputDistance.focus();
+  }
+
+  _shapeEdited(e) {
+    const layers = e.layers;
+    layers.eachLayer((layer) => {
+      // Find the corresponding workout and update it
+      const workoutId = layer.options.workoutId;
+      if (workoutId) {
+        const workout = this.#workouts.find((w) => w.id === workoutId);
+        if (workout) {
+          // Update the workout coordinates based on the edited shape
+          this._updateWorkoutCoords(workout, layer);
+          this._setLocalStorage();
+        }
+      }
+    });
+  }
+
+  _shapeDeleted(e) {
+    const layers = e.layers;
+    layers.eachLayer((layer) => {
+      // Find and remove the corresponding workout
+      const workoutId = layer.options.workoutId;
+      if (workoutId) {
+        this._deleteWorkout(workoutId);
+      }
+    });
+  }
+
+  _updateWorkoutCoords(workout, layer) {
+    switch (workout.shapeType) {
+      case 'marker':
+        workout.coords = [layer.getLatLng().lat, layer.getLatLng().lng];
+        break;
+      case 'polyline':
+        workout.coords = layer.getLatLngs().map((ll) => [ll.lat, ll.lng]);
+        break;
+      case 'polygon':
+        workout.coords = layer.getLatLngs()[0].map((ll) => [ll.lat, ll.lng]);
+        break;
+      case 'rectangle':
+        const bounds = layer.getBounds();
+        workout.coords = [
+          [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+          [bounds.getNorthEast().lat, bounds.getNorthEast().lng],
+        ];
+        break;
+      case 'circle':
+        workout.coords = [layer.getLatLng().lat, layer.getLatLng().lng];
+        workout.radius = layer.getRadius(); // Store radius for circles
+        break;
+    }
+  }
+
+  _getShapeCoords(layer, type) {
+    switch (type) {
+      case 'marker':
+        return [layer.getLatLng().lat, layer.getLatLng().lng];
+      case 'polyline':
+        return layer.getLatLngs().map((ll) => [ll.lat, ll.lng]);
+      case 'polygon':
+        return layer.getLatLngs()[0].map((ll) => [ll.lat, ll.lng]);
+      case 'rectangle':
+        const bounds = layer.getBounds();
+        return [
+          [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+          [bounds.getNorthEast().lat, bounds.getNorthEast().lng],
+        ];
+      case 'circle':
+        return [layer.getLatLng().lat, layer.getLatLng().lng];
+      default:
+        return [0, 0];
+    }
   }
 
   _fitAllWorkouts() {
@@ -441,8 +672,21 @@ class App {
     }
 
     // If not editing, create a new workout
-    const { lat, lng } = this.#mapEvent.latlng;
+    let coords;
+    if (this.#currentShape) {
+      // Use the shape data
+      coords = this._getShapeCoords(
+        this.#currentShape.layer,
+        this.#currentShape.type
+      );
+    } else {
+      // Fallback to point if no shape was drawn
+      const { lat, lng } = this.#mapEvent.latlng;
+      coords = [lat, lng];
+    }
+
     let workout;
+    const shapeType = this.#currentShape ? this.#currentShape.type : 'marker';
 
     // If workout running, create running object
     if (type === 'running') {
@@ -463,7 +707,7 @@ class App {
         return;
       }
 
-      workout = new Running([lat, lng], distance, duration, cadence);
+      workout = new Running(coords, distance, duration, cadence);
     }
 
     // If workout cycling, create cycling object
@@ -484,14 +728,20 @@ class App {
         return;
       }
 
-      workout = new Cycling([lat, lng], distance, duration, elevation);
+      workout = new Cycling(coords, distance, duration, elevation);
     }
+
+    // Set the shape type
+    workout.shapeType = shapeType;
 
     // Add new object to workout array
     this.#workouts.push(workout);
 
     // Render workout on map as marker
-    this._renderWorkoutMarker(workout);
+    this._renderWorkoutShape(
+      workout,
+      this.#currentShape ? this.#currentShape.layer : null
+    );
 
     // Render workout on list
     if (this.#sortField) {
@@ -507,11 +757,63 @@ class App {
     this._setLocalStorage();
 
     this._updateFitAllButton();
+
+    this.#currentShape = null;
   }
 
-  _renderWorkoutMarker(workout) {
-    const marker = L.marker(workout.coords)
-      .addTo(this.#map)
+  _renderWorkoutShape(workout, existingLayer = null) {
+    let shapeLayer;
+
+    if (existingLayer) {
+      // Use the existing layer that was drawn
+      shapeLayer = existingLayer;
+      // Add workout ID to the layer for later reference
+      shapeLayer.options.workoutId = workout.id;
+    } else {
+      // Create a new layer based on stored data
+      switch (workout.shapeType) {
+        case 'marker':
+          shapeLayer = L.marker(workout.coords);
+          break;
+        case 'polyline':
+          shapeLayer = L.polyline(workout.coords, {
+            color: workout.type === 'running' ? '#00c46a' : '#ffb545',
+          });
+          break;
+        case 'polygon':
+          shapeLayer = L.polygon(workout.coords, {
+            color: workout.type === 'running' ? '#00c46a' : '#ffb545',
+          });
+          break;
+        case 'rectangle':
+          shapeLayer = L.rectangle(
+            [
+              [workout.coords[0][0], workout.coords[0][1]],
+              [workout.coords[1][0], workout.coords[1][1]],
+            ],
+            { color: workout.type === 'running' ? '#00c46a' : '#ffb545' }
+          );
+          break;
+        case 'circle':
+          shapeLayer = L.circle(workout.coords, {
+            radius: workout.radius || 1000, // Default radius if not stored
+            color: workout.type === 'running' ? '#00c46a' : '#ffb545',
+          });
+          break;
+      }
+
+      // Add workout ID to the layer
+      shapeLayer.options.workoutId = workout.id;
+
+      // Add to drawn items layer
+      this.#drawnItems.addLayer(shapeLayer);
+    }
+
+    // Store reference to the layer
+    this.#markers.set(workout.id, shapeLayer);
+
+    // Add popup
+    shapeLayer
       .bindPopup(
         L.popup({
           maxWidth: 250,
@@ -525,8 +827,6 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
-
-    this.#markers.set(workout.id, marker);
   }
 
   _renderWorkout(workout) {
@@ -612,7 +912,6 @@ class App {
       popup.getElement().className = `leaflet-popup ${workout.type}-popup`;
     }
   }
-
   _handleWorkoutClick(e) {
     const workoutEl = e.target.closest('.workout');
     if (!workoutEl) return;
@@ -636,7 +935,36 @@ class App {
     const workout = this.#workouts.find((work) => work.id === workoutId);
     if (!workout) return;
 
-    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+    // Get the center point based on shape type
+    let centerCoords;
+    switch (workout.shapeType) {
+      case 'marker':
+      case 'circle':
+        // For markers and circles, coords is already [lat, lng]
+        centerCoords = workout.coords;
+        break;
+      case 'polyline':
+      case 'polygon':
+        // For lines and polygons, use the first point
+        centerCoords = workout.coords[0];
+        break;
+      case 'rectangle':
+        // For rectangles, calculate the center from the two corners
+        const sw = workout.coords[0]; // Southwest corner
+        const ne = workout.coords[1]; // Northeast corner
+        centerCoords = [
+          (sw[0] + ne[0]) / 2, // Average latitude
+          (sw[1] + ne[1]) / 2, // Average longitude
+        ];
+        break;
+      default:
+        // Fallback to first coordinate if available
+        centerCoords = Array.isArray(workout.coords[0])
+          ? workout.coords[0]
+          : workout.coords;
+    }
+
+    this.#map.setView(centerCoords, this.#mapZoomLevel, {
       animate: true,
       pan: { duration: 1 },
     });
@@ -689,11 +1017,10 @@ class App {
     const workoutEl = document.querySelector(`.workout[data-id="${id}"]`);
     if (workoutEl) workoutEl.remove();
 
-    // 3. Remove marker from map
-    const marker = this.#markers.get(id);
-    if (marker) {
-      this.#map.removeLayer(marker);
-      this.#markers.delete(id);
+    // 3. Remove shape from map
+    const shapeLayer = this.#markers.get(id);
+    if (shapeLayer && this.#drawnItems.hasLayer(shapeLayer)) {
+      this.#drawnItems.removeLayer(shapeLayer);
     }
 
     // 4. Update localStorage
@@ -726,8 +1053,8 @@ class App {
           this.#map.removeLayer(marker);
         });
 
-        // 2. Clear the markers Map
-        this.#markers.clear();
+        // 2. Clear all drawn shapes
+        this.#drawnItems.clearLayers();
 
         // 3. Clear workouts array
         this.#workouts = [];
@@ -780,6 +1107,8 @@ class App {
         );
         runningWorkout.id = work.id;
         runningWorkout.date = work.date;
+        runningWorkout.shapeType = work.shapeType || 'marker';
+        if (work.radius) runningWorkout.radius = work.radius;
         return runningWorkout;
       } else if (work.type === 'cycling') {
         const cyclingWorkout = new Cycling(
@@ -790,13 +1119,11 @@ class App {
         );
         cyclingWorkout.id = work.id;
         cyclingWorkout.date = work.date;
+        cyclingWorkout.shapeType = work.shapeType || 'marker';
+        if (work.radius) cyclingWorkout.radius = work.radius;
         return cyclingWorkout;
       }
       return work;
-    });
-
-    this.#workouts.forEach((work) => {
-      this._renderWorkout(work);
     });
 
     if (this.#workouts.length > 0) {
