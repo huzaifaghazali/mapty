@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 
@@ -9,15 +8,14 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-   iconRetinaUrl,
-   iconUrl,
-   shadowUrl,
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
 });
 
 import 'leaflet/dist/leaflet.css';
-import './index.css';
 
-/* Workout classes (same behavior as original) */
+/* Workout classes */
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10);
@@ -77,12 +75,23 @@ class Cycling extends Workout {
   }
 }
 
-/* UI components (kept classNames matching original CSS) */
+/* UI components */
 function Sidebar({ children }) {
-  return <aside className='sidebar'>{children}</aside>;
+  return (
+    <aside className='flex-[0_0_50rem] bg-dark1 px-[5rem] py-[3rem] pb-[4rem] flex flex-col'>
+      {children}
+    </aside>
+  );
 }
+
 function Logo() {
-  return <img src='/logo.png' alt='Mapty logo' className='logo' />;
+  return (
+    <img
+      src='/logo.png'
+      alt='Mapty logo'
+      className='h-[5.2rem] self-center mb-[4rem]'
+    />
+  );
 }
 
 function WorkoutForm({
@@ -95,17 +104,22 @@ function WorkoutForm({
 }) {
   return (
     <form
-      className={`form ${visible ? '' : 'hidden'}`}
+      className={`bg-dark2 rounded-[5px] px-[2.75rem] py-[1.5rem] mb-[1.75rem] grid grid-cols-2 gap-x-[2.5rem] gap-y-[0.5rem] transition-all duration-500 ${
+        visible ? 'h-[9.25rem] opacity-100' : 'form-hidden'
+      }`}
       onSubmit={onSubmit}
       aria-hidden={!visible}
     >
-      <div className='form__row'>
-        <label className='form__label' htmlFor='type'>
+      <div className='flex items-baseline'>
+        <label
+          className='flex-[0_0_50%] text-[1.5rem] font-semibold'
+          htmlFor='type'
+        >
           Type
         </label>
         <select
           id='type'
-          className='form__input form__input--type'
+          className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           value={type}
           onChange={onTypeChange}
         >
@@ -114,14 +128,17 @@ function WorkoutForm({
         </select>
       </div>
 
-      <div className='form__row'>
-        <label className='form__label' htmlFor='distance'>
+      <div className='flex items-baseline'>
+        <label
+          className='flex-[0_0_50%] text-[1.5rem] font-semibold'
+          htmlFor='distance'
+        >
           Distance
         </label>
         <input
           id='distance'
           name='distance'
-          className='form__input form__input--distance'
+          className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           placeholder='km'
           value={values.distance}
           onChange={(e) =>
@@ -131,14 +148,17 @@ function WorkoutForm({
         />
       </div>
 
-      <div className='form__row'>
-        <label className='form__label' htmlFor='duration'>
+      <div className='flex items-baseline'>
+        <label
+          className='flex-[0_0_50%] text-[1.5rem] font-semibold'
+          htmlFor='duration'
+        >
           Duration
         </label>
         <input
           id='duration'
           name='duration'
-          className='form__input form__input--duration'
+          className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           placeholder='min'
           value={values.duration}
           onChange={(e) =>
@@ -149,15 +169,18 @@ function WorkoutForm({
       </div>
 
       <div
-        className={`form__row ${type === 'running' ? '' : 'form__row--hidden'}`}
+        className={`flex items-baseline ${type === 'running' ? '' : 'hidden'}`}
       >
-        <label className='form__label' htmlFor='cadence'>
+        <label
+          className='flex-[0_0_50%] text-[1.5rem] font-semibold'
+          htmlFor='cadence'
+        >
           Cadence
         </label>
         <input
           id='cadence'
           name='cadence'
-          className='form__input form__input--cadence'
+          className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           placeholder='step/min'
           value={values.cadence}
           onChange={(e) =>
@@ -168,15 +191,18 @@ function WorkoutForm({
       </div>
 
       <div
-        className={`form__row ${type === 'cycling' ? '' : 'form__row--hidden'}`}
+        className={`flex items-baseline ${type === 'cycling' ? '' : 'hidden'}`}
       >
-        <label className='form__label' htmlFor='elevation'>
+        <label
+          className='flex-[0_0_50%] text-[1.5rem] font-semibold'
+          htmlFor='elevation'
+        >
           Elev Gain
         </label>
         <input
           id='elevation'
           name='elevation'
-          className='form__input form__input--elevation'
+          className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           placeholder='meters'
           value={values.elevation}
           onChange={(e) =>
@@ -186,7 +212,7 @@ function WorkoutForm({
         />
       </div>
 
-      <button className='form__btn' type='submit'>
+      <button className='hidden' type='submit'>
         OK
       </button>
     </form>
@@ -195,56 +221,79 @@ function WorkoutForm({
 
 function WorkoutsList({ workouts }) {
   return (
-    <ul className='workouts' aria-label='List of workouts'>
+    <ul
+      className='list-none h-[77vh] overflow-y-scroll overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:w-0'
+      aria-label='List of workouts'
+    >
       {workouts.map((w) => (
         <li
           key={w.id}
           data-id={w.id}
-          className={`workout workout--${w.type}`}
+          className={`workout bg-dark2 rounded-[5px] px-[2.25rem] py-[1.5rem] mb-[1.75rem] cursor-pointer grid grid-cols-4 gap-x-[1.5rem] gap-y-[0.75rem] transition-all duration-200 hover:bg-opacity-80 ${
+            w.type === 'running'
+              ? 'border-l-[5px] border-l-brand2'
+              : 'border-l-[5px] border-l-brand1'
+          }`}
           tabIndex={0}
           role='button'
         >
-          <h2 className='workout__title'>{w.description}</h2>
-          <div className='workout__details'>
-            <span className='workout__icon'>
+          <h2 className='text-[1.7rem] font-semibold col-span-4'>
+            {w.description}
+          </h2>
+          <div className='flex items-baseline'>
+            <span className='text-[1.8rem] mr-[0.2rem]'>
               {w.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'}
             </span>
-            <span className='workout__value'>{w.distance}</span>
-            <span className='workout__unit'>km</span>
+            <span className='text-[1.5rem] mr-[0.5rem]'>{w.distance}</span>
+            <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+              km
+            </span>
           </div>
-          <div className='workout__details'>
-            <span className='workout__icon'>⏱</span>
-            <span className='workout__value'>{w.duration}</span>
-            <span className='workout__unit'>min</span>
+          <div className='flex items-baseline'>
+            <span className='text-[1.8rem] mr-[0.2rem]'>⏱</span>
+            <span className='text-[1.5rem] mr-[0.5rem]'>{w.duration}</span>
+            <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+              min
+            </span>
           </div>
           {w.type === 'running' ? (
             <>
-              <div className='workout__details'>
-                <span className='workout__icon'>⚡️</span>
-                <span className='workout__value'>
+              <div className='flex items-baseline'>
+                <span className='text-[1.8rem] mr-[0.2rem]'>⚡️</span>
+                <span className='text-[1.5rem] mr-[0.5rem]'>
                   {w.pace ? w.pace.toFixed(1) : '-'}
                 </span>
-                <span className='workout__unit'>min/km</span>
+                <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+                  min/km
+                </span>
               </div>
-              <div className='workout__details'>
-                <span className='workout__icon'>🦶🏼</span>
-                <span className='workout__value'>{w.cadence}</span>
-                <span className='workout__unit'>spm</span>
+              <div className='flex items-baseline'>
+                <span className='text-[1.8rem] mx-[0.5rem]'>🦶🏼</span>
+                <span className='text-[1.5rem] mr-[0.5rem]'>{w.cadence}</span>
+                <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+                  spm
+                </span>
               </div>
             </>
           ) : (
             <>
-              <div className='workout__details'>
-                <span className='workout__icon'>⚡️</span>
-                <span className='workout__value'>
+              <div className='flex items-baseline'>
+                <span className='text-[1.8rem] mr-[0.2rem]'>⚡️</span>
+                <span className='text-[1.5rem] mr-[0.5rem]'>
                   {w.speed ? w.speed.toFixed(1) : '-'}
                 </span>
-                <span className='workout__unit'>km/h</span>
+                <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+                  km/h
+                </span>
               </div>
-              <div className='workout__details'>
-                <span className='workout__icon'>⛰</span>
-                <span className='workout__value'>{w.elevationGain}</span>
-                <span className='workout__unit'>m</span>
+              <div className='flex items-baseline'>
+                <span className='text-[1.8rem] mx-[0.5rem]'>⛰</span>
+                <span className='text-[1.5rem] mr-[0.5rem]'>
+                  {w.elevationGain}
+                </span>
+                <span className='text-[1.1rem] text-light1 uppercase font-extrabold'>
+                  m
+                </span>
               </div>
             </>
           )}
@@ -317,7 +366,6 @@ export default function App() {
       navigator.geolocation.getCurrentPosition(
         (pos) => _loadMap(pos),
         () => {
-          // fallback coords (London)
           _loadMap({ coords: { latitude: 51.505, longitude: -0.09 } });
         },
         { timeout: 10000 }
@@ -337,7 +385,6 @@ export default function App() {
       return;
     }
 
-    // If map already exists, just set view
     if (mapInstance.current) {
       mapInstance.current.setView(coords, 13);
       return;
@@ -350,7 +397,6 @@ export default function App() {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(mapInstance.current);
 
-    // Ensure proper rendering (common issue inside flex)
     const doInvalidate = () => {
       if (mapInstance.current) mapInstance.current.invalidateSize();
     };
@@ -358,16 +404,12 @@ export default function App() {
     setTimeout(doInvalidate, 100);
     setTimeout(doInvalidate, 500);
 
-    // show form on map click
     mapInstance.current.on('click', (mapE) => {
       mapEvent.current = mapE;
       setFormVisible(true);
     });
 
-    // set flag so other effects can depend on map being ready
     setMapInitialized(true);
-
-    // add markers for any previously loaded workouts
     workouts.forEach((w) => _renderWorkoutMarker(w));
   }
 
@@ -392,10 +434,8 @@ export default function App() {
     markersRef.current.push(marker);
   }
 
-  // Keep markers in sync whenever workouts change (and map is ready)
   useEffect(() => {
     if (!mapInitialized || !mapInstance.current) return;
-    // remove all previous markers
     markersRef.current.forEach((m) => {
       try {
         mapInstance.current.removeLayer(m);
@@ -405,7 +445,6 @@ export default function App() {
     workouts.forEach((w) => _renderWorkoutMarker(w));
   }, [workouts, mapInitialized]);
 
-  // cleanup on unmount
   useEffect(() => {
     return () => {
       if (mapInstance.current) {
@@ -462,7 +501,6 @@ export default function App() {
     setFormVisible(false);
   }
 
-  // click on list -> move map
   useEffect(() => {
     function onClick(e) {
       const li = e.target.closest('.workout');
@@ -480,7 +518,7 @@ export default function App() {
   }, [workouts]);
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <div className='flex h-[95vh]'>
       <Sidebar>
         <Logo />
         <WorkoutForm
@@ -492,22 +530,42 @@ export default function App() {
           onSubmit={handleSubmit}
         />
         <WorkoutsList workouts={workouts} />
-        <p className='copyright'>
+        <p className='mt-auto text-[1.3rem] text-center text-light1'>
           &copy; Copyright by{' '}
           <a
-            className='twitter-link'
-            href='https://twitter.com/jonasschmedtman'
+            className='text-light1 transition-all duration-200 hover:text-[#ececec]'
+            href='https://github.com/huzaifaghazali'
             target='_blank'
             rel='noopener noreferrer'
           >
-            Jonas Schmedtmann
+            Huzaifa Ghazali
           </a>
-          . Use for learning or your portfolio. Don't use to teach. Don't claim
-          as your own.
+          . Made with love ♥️.
         </p>
       </Sidebar>
 
-      <div id='map' ref={mapRef} style={{ flex: 1, height: '100%' }} />
+      <div id='map' ref={mapRef} className='flex-1 h-full bg-[#aaa]' />
+
+      <style>{`
+        .leaflet-popup .leaflet-popup-content-wrapper {
+          background-color: #2d3439;
+          color: #ececec;
+          border-radius: 5px;
+          padding-right: 0.6rem;
+        }
+        .leaflet-popup .leaflet-popup-content {
+          font-size: 1.5rem;
+        }
+        .leaflet-popup .leaflet-popup-tip {
+          background-color: #2d3439;
+        }
+        .running-popup .leaflet-popup-content-wrapper {
+          border-left: 5px solid #00c46a;
+        }
+        .cycling-popup .leaflet-popup-content-wrapper {
+          border-left: 5px solid #ffb545;
+        }
+      `}</style>
     </div>
   );
 }

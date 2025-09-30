@@ -13,7 +13,7 @@ export default {
         light3: '#d6dee0',
       },
       fontFamily: {
-        manrope: ['Manrope', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
       },
     },
   },
