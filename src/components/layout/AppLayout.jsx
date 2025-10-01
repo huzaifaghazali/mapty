@@ -10,6 +10,7 @@ export function AppLayout({
   formValues,
   setFormValues,
   onSubmit,
+  onCancel,
   workouts,
   mapRef,
 }) {
@@ -24,6 +25,7 @@ export function AppLayout({
           values={formValues}
           setValues={setFormValues}
           onSubmit={onSubmit}
+          onCancel={onCancel}
         />
         <WorkoutsList workouts={workouts} />
         <p className='mt-auto text-[1.3rem] text-center text-light1'>

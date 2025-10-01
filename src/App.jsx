@@ -81,6 +81,12 @@ export default function App() {
     [formType, formValues, setWorkouts]
   );
 
+  // Handle form cancellation
+  const handleCancel = useCallback(() => {
+    setFormValues({ distance: '', duration: '', cadence: '', elevation: '' });
+    setFormVisible(false);
+  }, []);
+
   useEffect(() => {
     function onClick(e) {
       const li = e.target.closest('.workout');
@@ -106,6 +112,7 @@ export default function App() {
         formValues={formValues}
         setFormValues={setFormValues}
         onSubmit={handleSubmit}
+        onCancel={handleCancel}
         workouts={workouts}
         mapRef={mapRef}
       />
