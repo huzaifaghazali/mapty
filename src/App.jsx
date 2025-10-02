@@ -39,19 +39,6 @@ export default function App() {
   
   const { mapRef, mapInstance, mapInitialized } = useMap(position, handleMapClick);
 
-
-    // Listen for map click events
-  useEffect(() => {
-    const handleMapClick = (e) => {
-      mapEventRef.current = e.detail;
-      setFormVisible(true);
-    };
-
-    window.addEventListener('mapClick', handleMapClick);
-    return () => window.removeEventListener('mapClick', handleMapClick);
-  }, []);
-
-
   // Rehydrate localStorage
   useEffect(() => {
     if (workouts.length === 0) return;

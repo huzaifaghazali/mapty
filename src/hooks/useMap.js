@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -12,18 +12,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl,
 });
 
-export function useMap(position) {
+export function useMap(position, onMapClick) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const [mapInitialized, setMapInitialized] = useState(false);
-  const mapEventRef = useRef(null);
-
-  // Memoize the map click handler to prevent re-renders
-  const handleMapClick = useCallback((mapE) => {
-    mapEventRef.current = mapE;
-    // Dispatch a custom event to notify the parent component
-    window.dispatchEvent(new CustomEvent('mapClick', { detail: mapE }));
-  }, []);
 
   useEffect(() => {
     if (!position || !mapRef.current) return;
@@ -50,7 +42,10 @@ export function useMap(position) {
     setTimeout(doInvalidate, 100);
     setTimeout(doInvalidate, 500);
 
-    mapInstance.current.on('click', handleMapClick);
+    // Directly call the onMapClick callback when the map is clicked
+    if (onMapClick) {
+      mapInstance.current.on('click', onMapClick);
+    }
 
     setMapInitialized(true);
 
@@ -62,7 +57,7 @@ export function useMap(position) {
         mapInstance.current = null;
       }
     };
-  }, [position, handleMapClick]);
+  }, [position, onMapClick]);
 
-  return { mapRef, mapInstance, mapInitialized, mapEventRef };
+  return { mapRef, mapInstance, mapInitialized };
 }
