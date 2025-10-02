@@ -1,6 +1,6 @@
 import { WorkoutStats } from './WorkoutStats.jsx';
 
-export function WorkoutItem({ workout }) {
+export function WorkoutItem({ workout, onEdit }) {
   return (
     <li
       key={workout.id}
@@ -13,8 +13,18 @@ export function WorkoutItem({ workout }) {
       tabIndex={0}
       role='button'
     >
-      <h2 className='text-[1.7rem] font-semibold col-span-4'>
-        {workout.description}
+      <h2 className='text-[1.7rem] font-semibold col-span-4 flex justify-between items-center'>
+        <span>{workout.description}</span>
+        <button
+          title='Edit'
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(workout);
+          }}
+          className='px-[1rem] py-[0.3rem] bg-teal-600 text-white text-[1.2rem] font-medium rounded-[5px] transition-all duration-200 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500'
+        >
+          ✏️
+        </button>
       </h2>
       <div className='flex items-baseline'>
         <span className='text-[1.8rem] mr-[0.2rem]'>

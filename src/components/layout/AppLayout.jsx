@@ -13,6 +13,8 @@ export function AppLayout({
   onCancel,
   workouts,
   mapRef,
+  isEditing,
+  onEditWorkout,
 }) {
   return (
     <div className='flex h-[95vh]'>
@@ -26,8 +28,9 @@ export function AppLayout({
           setValues={setFormValues}
           onSubmit={onSubmit}
           onCancel={onCancel}
+          isEditing={isEditing}
         />
-        <WorkoutsList workouts={workouts} />
+        <WorkoutsList workouts={workouts} onEditWorkout={onEditWorkout} />
         <p className='mt-auto text-[1.3rem] text-center text-light1'>
           &copy; Copyright by{' '}
           <a

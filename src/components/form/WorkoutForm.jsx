@@ -8,6 +8,7 @@ export function WorkoutForm({
   setValues,
   onSubmit,
   onCancel,
+  isEditing,
 }) {
   const handleCancel = () => {
     // Clear form values
@@ -41,6 +42,7 @@ export function WorkoutForm({
           className='w-full px-[1.1rem] py-[0.3rem] text-[1.4rem] text-black border-none rounded-[3px] bg-light3 transition-all duration-200 focus:outline-none focus:bg-white'
           value={type}
           onChange={onTypeChange}
+          disabled={isEditing}
         >
           <option value='running'>Running</option>
           <option value='cycling'>Cycling</option>
@@ -103,7 +105,7 @@ export function WorkoutForm({
           type='submit'
           className='px-[1.5rem] py-[0.5rem] bg-brand2 text-white text-[1.4rem] font-medium rounded-[10px] transition-all duration-200 hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-brand2 focus:ring-opacity-50'
         >
-          OK
+          {isEditing ? 'Update' : 'OK'}
         </button>
       </div>
     </form>

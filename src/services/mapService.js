@@ -4,7 +4,7 @@ import { Cycling } from '../models/Cycling.js';
 export function createWorkout(formType, coords, formValues) {
   const distance = +formValues.distance;
   const duration = +formValues.duration;
-
+  
   const validInputs = (...inputs) =>
     inputs.every((inp) => Number.isFinite(inp));
   const allPositive = (...inputs) => inputs.every((inp) => inp > 0);
@@ -27,8 +27,54 @@ export function createWorkout(formType, coords, formValues) {
       throw new Error('Inputs have to be positive numbers!');
     workout = new Cycling(coords, distance, duration, elevation);
   }
-
+  
   return workout;
+}
+
+export function updateWorkout(workout, formValues) {
+  if (!workout) {
+    throw new Error('Workout not found');
+  }
+  
+  const distance = +formValues.distance;
+  const duration = +formValues.duration;
+  
+  const validInputs = (...inputs) =>
+    inputs.every((inp) => Number.isFinite(inp));
+  const allPositive = (...inputs) => inputs.every((inp) => inp > 0);
+
+  // Create a new workout object with updated values
+  let updatedWorkout;
+  
+  if (workout.type === 'running') {
+    const cadence = +formValues.cadence;
+    if (
+      !validInputs(distance, duration, cadence) ||
+      !allPositive(distance, duration, cadence)
+    )
+      throw new Error('Inputs have to be positive numbers!');
+    
+    // Create a new Running instance with updated values
+    updatedWorkout = new Running(workout.coords, distance, duration, cadence);
+    updatedWorkout.id = workout.id;
+    updatedWorkout.date = workout.date;
+    updatedWorkout.clicks = workout.clicks || 0;
+  } else {
+    const elevation = +formValues.elevation;
+    if (
+      !validInputs(distance, duration, elevation) ||
+      !allPositive(distance, duration, elevation)
+    )
+      throw new Error('Inputs have to be positive numbers!');
+    
+    // Create a new Cycling instance with updated values
+    updatedWorkout = new Cycling(workout.coords, distance, duration, elevation);
+    updatedWorkout.id = workout.id;
+    updatedWorkout.date = workout.date;
+    updatedWorkout.clicks = workout.clicks || 0;
+  }
+  
+  return updatedWorkout;
 }
 
 export function rehydrateWorkouts(data) {

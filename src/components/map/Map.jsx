@@ -6,7 +6,7 @@ export function Map({ mapInstance, workouts }) {
 
   useEffect(() => {
     if (!mapInstance.current) return;
-    
+
     // Clear existing markers
     markersRef.current.forEach((m) => {
       try {
@@ -14,7 +14,7 @@ export function Map({ mapInstance, workouts }) {
       } catch (e) {}
     });
     markersRef.current = [];
-    
+
     // Add markers for each workout
     workouts.forEach((w) => {
       const marker = L.marker(w.coords)
@@ -31,8 +31,8 @@ export function Map({ mapInstance, workouts }) {
         .setPopupContent(
           `${w.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${w.description}`
         );
-        // Don't open popup automatically for new markers
-        // .openPopup();
+      // Don't open popup automatically for new markers
+      // .openPopup();
 
       markersRef.current.push(marker);
     });
