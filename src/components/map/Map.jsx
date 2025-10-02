@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 
-export function Map({ mapInstance, workouts }) {
+export function Map({ mapInstance, workouts, mapInitialized }) {
   const markersRef = useRef([]);
+  const prevWorkoutsRef = useRef([]);
 
   useEffect(() => {
-    if (!mapInstance.current) return;
+    if (!mapInstance.current || !mapInitialized) return;
 
     // Clear existing markers
     markersRef.current.forEach((m) => {
@@ -36,7 +37,10 @@ export function Map({ mapInstance, workouts }) {
 
       markersRef.current.push(marker);
     });
-  }, [mapInstance, workouts]);
+
+    // Store the current workouts for comparison in the next render
+    prevWorkoutsRef.current = workouts;
+  }, [mapInstance, workouts, mapInitialized]);
 
   return null; // This component doesn't render anything, it just manages markers
 }
