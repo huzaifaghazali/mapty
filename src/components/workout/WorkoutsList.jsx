@@ -1,6 +1,6 @@
 import { WorkoutItem } from './WorkoutItem.jsx';
 
-export function WorkoutsList({ workouts, onEditWorkout }) {
+export function WorkoutsList({ workouts, onEditWorkout, onDeleteWorkout }) {
   return (
     <ul
       className='list-none h-[77vh] overflow-y-scroll overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:w-0'
@@ -11,6 +11,7 @@ export function WorkoutsList({ workouts, onEditWorkout }) {
           key={workout.id}
           workout={workout}
           onEdit={onEditWorkout}
+          onDelete={onDeleteWorkout}
         />
       ))}
     </ul>

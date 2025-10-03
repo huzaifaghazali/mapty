@@ -1,6 +1,6 @@
 import { WorkoutStats } from './WorkoutStats.jsx';
 
-export function WorkoutItem({ workout, onEdit }) {
+export function WorkoutItem({ workout, onEdit, onDelete }) {
   return (
     <li
       key={workout.id}
@@ -15,16 +15,28 @@ export function WorkoutItem({ workout, onEdit }) {
     >
       <h2 className='text-[1.7rem] font-semibold col-span-4 flex justify-between items-center'>
         <span>{workout.description}</span>
-        <button
-          title='Edit'
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(workout);
-          }}
-          className='px-[1rem] py-[0.3rem] bg-teal-600 text-white text-[1.2rem] font-medium rounded-[5px] transition-all duration-200 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500'
-        >
-          ✏️
-        </button>
+        <div className='flex gap-[0.5rem]'>
+          <button
+            title='Edit'
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(workout);
+            }}
+            className='px-[1rem] py-[0.3rem] bg-teal-600 text-white text-[1.2rem] font-medium rounded-[5px] transition-all duration-200 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500'
+          >
+            ✏️
+          </button>
+          <button
+            title='Delete'
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(workout.id);
+            }}
+            className='px-[1rem] py-[0.3rem] bg-red-600 text-white text-[1.2rem] font-medium rounded-[5px] transition-all duration-200 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
+          >
+            🗑
+          </button>
+        </div>
       </h2>
       <div className='flex items-baseline'>
         <span className='text-[1.8rem] mr-[0.2rem]'>

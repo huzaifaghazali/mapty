@@ -145,6 +145,13 @@ export default function App() {
     });
   }, []);
 
+  // Handle workout deletion
+  const handleDeleteWorkout = useCallback((workoutId) => {
+    if(window.confirm('Are you sure you want to delete this workout?')) {
+      setWorkouts((prev) =>  prev.filter((workout) => workout.id !== workoutId))
+    }
+  }, [setWorkouts])
+
   useEffect(() => {
     function onClick(e) {
       const li = e.target.closest('.workout');
@@ -168,13 +175,14 @@ export default function App() {
         formType={formType}
         onTypeChange={handleTypeChange}
         formValues={formValues}
-        setFormValues={setFormValues}
+        setValues={setFormValues}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         workouts={workouts}
         mapRef={mapRef}
         isEditing={isEditing}
         onEditWorkout={handleEditWorkout}
+        onDeleteWorkout={handleDeleteWorkout}
       />
       <Map
         mapInstance={mapInstance}

@@ -8,13 +8,14 @@ export function AppLayout({
   formType,
   onTypeChange,
   formValues,
-  setFormValues,
+  setValues,
   onSubmit,
   onCancel,
   workouts,
   mapRef,
   isEditing,
   onEditWorkout,
+  onDeleteWorkout,
 }) {
   return (
     <div className='flex h-[95vh]'>
@@ -25,12 +26,16 @@ export function AppLayout({
           type={formType}
           onTypeChange={onTypeChange}
           values={formValues}
-          setValues={setFormValues}
+          setValues={setValues}
           onSubmit={onSubmit}
           onCancel={onCancel}
           isEditing={isEditing}
         />
-        <WorkoutsList workouts={workouts} onEditWorkout={onEditWorkout} />
+        <WorkoutsList
+          workouts={workouts}
+          onEditWorkout={onEditWorkout}
+          onDeleteWorkout={onDeleteWorkout}
+        />
         <p className='mt-auto text-[1.3rem] text-center text-light1'>
           &copy; Copyright by{' '}
           <a
