@@ -2,6 +2,7 @@ import { Sidebar } from '../common/Sidebar.jsx';
 import { Logo } from '../common/Logo.jsx';
 import { WorkoutForm } from '../form/WorkoutForm.jsx';
 import { WorkoutsList } from '../workout/WorkoutsList.jsx';
+import { SortControls } from '../common/SortControls.jsx';
 
 export function AppLayout({
   formVisible,
@@ -17,6 +18,7 @@ export function AppLayout({
   onEditWorkout,
   onDeleteWorkout,
   onDeleteAllWorkouts,
+  onSortChange,
 }) {
   return (
     <div className='flex h-[95vh]'>
@@ -32,6 +34,9 @@ export function AppLayout({
           onCancel={onCancel}
           isEditing={isEditing}
         />
+
+        {workouts.length > 0 && <SortControls onSortChange={onSortChange} />}
+
         <WorkoutsList
           workouts={workouts}
           onEditWorkout={onEditWorkout}

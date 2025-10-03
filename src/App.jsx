@@ -9,10 +9,12 @@ import {
   updateWorkout,
   rehydrateWorkouts,
 } from './services/mapService.js';
+import { sortWorkouts } from './services/sortService.js';
 import 'leaflet/dist/leaflet.css';
 
 export default function App() {
   const [workouts, setWorkouts] = useLocalStorage('workouts', []);
+  const [sortedWorkouts, setSortedWorkouts] = useState([]);
   const [formVisible, setFormVisible] = useState(false);
   const [formType, setFormType] = useState('running');
   const [formValues, setFormValues] = useState({
@@ -24,6 +26,8 @@ export default function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingWorkoutId, setEditingWorkoutId] = useState(null);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
+  const [sortField, setSortField] = useState('date');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const mapEventRef = useRef(null);
   const { position } = useGeolocation();
@@ -46,6 +50,12 @@ export default function App() {
     position,
     handleMapClick
   );
+
+  // Sort workouts whenever the workouts array or sort settings change
+  useEffect(() => {
+    const sorted = sortWorkouts(workouts, sortField, sortDirection);
+    setSortedWorkouts(sorted);
+  }, [workouts, sortField, sortDirection]);
 
   // Rehydrate localStorage
   useEffect(() => {
@@ -170,6 +180,12 @@ export default function App() {
     }
   }, [workouts.length, setWorkouts]);
 
+  // Handle sorting
+  const handleSortChange = useCallback((field, direction) => {
+    setSortField(field);
+    setSortDirection(direction);
+  }, []);
+
   useEffect(() => {
     function onClick(e) {
       const li = e.target.closest('.workout');
@@ -196,12 +212,13 @@ export default function App() {
         setValues={setFormValues}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        workouts={workouts}
+        workouts={sortedWorkouts}
         mapRef={mapRef}
         isEditing={isEditing}
         onEditWorkout={handleEditWorkout}
         onDeleteWorkout={handleDeleteWorkout}
         onDeleteAllWorkouts={handleDeleteAllWorkouts}
+        onSortChange={handleSortChange}
       />
       <Map
         mapInstance={mapInstance}
