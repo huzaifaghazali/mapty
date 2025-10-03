@@ -16,6 +16,7 @@ export function AppLayout({
   isEditing,
   onEditWorkout,
   onDeleteWorkout,
+  onDeleteAllWorkouts,
 }) {
   return (
     <div className='flex h-[95vh]'>
@@ -36,6 +37,19 @@ export function AppLayout({
           onEditWorkout={onEditWorkout}
           onDeleteWorkout={onDeleteWorkout}
         />
+
+        {/* Delete All Button */}
+        {workouts.length > 0 && (
+          <div className='flex justify-end mb-[1rem]'>
+            <button
+              onClick={onDeleteAllWorkouts}
+              className='px-[1.5rem] py-[0.5rem] bg-red-600 text-white text-[1.4rem] font-medium rounded-[10px] transition-all duration-200 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
+            >
+              Delete All
+            </button>
+          </div>
+        )}
+
         <p className='mt-auto text-[1.3rem] text-center text-light1'>
           &copy; Copyright by{' '}
           <a

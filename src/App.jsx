@@ -146,11 +146,29 @@ export default function App() {
   }, []);
 
   // Handle workout deletion
-  const handleDeleteWorkout = useCallback((workoutId) => {
-    if(window.confirm('Are you sure you want to delete this workout?')) {
-      setWorkouts((prev) =>  prev.filter((workout) => workout.id !== workoutId))
+  const handleDeleteWorkout = useCallback(
+    (workoutId) => {
+      if (window.confirm('Are you sure you want to delete this workout?')) {
+        setWorkouts((prev) =>
+          prev.filter((workout) => workout.id !== workoutId)
+        );
+      }
+    },
+    [setWorkouts]
+  );
+
+  // Handle all workouts deletion
+  const handleDeleteAllWorkouts = useCallback(() => {
+    if (workouts.length === 0) return;
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete all ${workouts.length} workout(s)? This action cannot be undone.`
+      )
+    ) {
+      setWorkouts([]);
     }
-  }, [setWorkouts])
+  }, [workouts.length, setWorkouts]);
 
   useEffect(() => {
     function onClick(e) {
@@ -183,6 +201,7 @@ export default function App() {
         isEditing={isEditing}
         onEditWorkout={handleEditWorkout}
         onDeleteWorkout={handleDeleteWorkout}
+        onDeleteAllWorkouts={handleDeleteAllWorkouts}
       />
       <Map
         mapInstance={mapInstance}
