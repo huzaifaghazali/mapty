@@ -4,6 +4,10 @@ import { useLocalStorage } from './hooks/useLocalStorage.js';
 import { useMap } from './hooks/useMap.js';
 import { AppLayout } from './components/layout/AppLayout.jsx';
 import { Map } from './components/map/Map.jsx';
+import { ToastContainer } from './components/common/ToastContainer.jsx';
+import { Modal } from './components/common/Modal.jsx';
+import { ToastProvider, useToast } from './contexts/ToastContext.jsx';
+import { ModalProvider, useModal } from './contexts/ModalContext.jsx';
 import {
   createWorkout,
   updateWorkout,
@@ -12,7 +16,7 @@ import {
 import { sortWorkouts } from './services/sortService.js';
 import 'leaflet/dist/leaflet.css';
 
-export default function App() {
+function AppContent() {
   const [workouts, setWorkouts] = useLocalStorage('workouts', []);
   const [sortedWorkouts, setSortedWorkouts] = useState([]);
   const [formVisible, setFormVisible] = useState(false);
@@ -31,6 +35,8 @@ export default function App() {
 
   const mapEventRef = useRef(null);
   const { position } = useGeolocation();
+  const { showError, showSuccess, toasts, removeToast } = useToast();
+  const { confirm, modal } = useModal();
 
   // Use a callback to handle map clicks
   const handleMapClick = useCallback((mapE) => {
@@ -70,6 +76,7 @@ export default function App() {
       setWorkoutsLoaded(true);
     } catch (err) {
       console.error('Could not parse workouts from localStorage', err);
+      showError('Failed to load workouts from storage');
       setWorkoutsLoaded(true);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -90,12 +97,14 @@ export default function App() {
             (w) => w.id === editingWorkoutId
           );
           if (workoutIndex === -1) {
-            throw new Error('Workout not found');
+            showError('Workout not found');
+            return;
           }
 
           const workout = workouts[workoutIndex];
           if (!workout) {
-            throw new Error('Workout not found');
+            showError('Workout not found');
+            return;
           }
 
           const updatedWorkout = updateWorkout(workout, formValues);
@@ -105,14 +114,19 @@ export default function App() {
           updatedWorkouts[workoutIndex] = updatedWorkout;
 
           setWorkouts(updatedWorkouts);
+          showSuccess('Workout updated successfully');
         } else {
           // Create new workout
-          if (!mapEventRef.current) return;
+          if (!mapEventRef.current) {
+            showError('Please click on the map to select a location');
+            return;
+          }
           const { lat, lng } = mapEventRef.current.latlng;
           const coords = [lat, lng];
 
           const workout = createWorkout(formType, coords, formValues);
           setWorkouts((prev) => [...prev, workout]);
+          showSuccess('Workout added successfully');
         }
 
         setFormValues({
@@ -125,10 +139,19 @@ export default function App() {
         setIsEditing(false);
         setEditingWorkoutId(null);
       } catch (error) {
-        alert(error.message);
+        showError(error.message);
       }
     },
-    [isEditing, editingWorkoutId, formType, formValues, setWorkouts, workouts]
+    [
+      isEditing,
+      editingWorkoutId,
+      formType,
+      formValues,
+      setWorkouts,
+      workouts,
+      showError,
+      showSuccess,
+    ]
   );
 
   // Handle form cancellation
@@ -157,28 +180,40 @@ export default function App() {
 
   // Handle workout deletion
   const handleDeleteWorkout = useCallback(
-    (workoutId) => {
-      if (window.confirm('Are you sure you want to delete this workout?')) {
+    async (workoutId) => {
+      const result = await confirm(
+        'Delete Workout',
+        'Are you sure you want to delete this workout? This action cannot be undone.',
+        null,
+        { type: 'danger', confirmText: 'Delete', cancelText: 'Cancel' }
+      );
+
+      if (result) {
         setWorkouts((prev) =>
           prev.filter((workout) => workout.id !== workoutId)
         );
+        showSuccess('Workout deleted successfully');
       }
     },
-    [setWorkouts]
+    [confirm, showSuccess, setWorkouts]
   );
 
   // Handle all workouts deletion
-  const handleDeleteAllWorkouts = useCallback(() => {
+  const handleDeleteAllWorkouts = useCallback(async () => {
     if (workouts.length === 0) return;
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete all ${workouts.length} workout(s)? This action cannot be undone.`
-      )
-    ) {
+    const result = await confirm(
+      'Delete All Workouts',
+      `Are you sure you want to delete all ${workouts.length} workout(s)? This action cannot be undone.`,
+      null,
+      { type: 'danger', confirmText: 'Delete All', cancelText: 'Cancel' }
+    );
+
+    if (result) {
       setWorkouts([]);
+      showSuccess('All workouts deleted successfully');
     }
-  }, [workouts.length, setWorkouts]);
+  }, [workouts.length, confirm, showSuccess, setWorkouts]);
 
   // Handle sorting
   const handleSortChange = useCallback((field, direction) => {
@@ -225,6 +260,27 @@ export default function App() {
         workouts={workouts}
         mapInitialized={mapInitialized && workoutsLoaded}
       />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <Modal
+        isOpen={modal.isOpen}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={modal.onCancel}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        type={modal.type}
+      />
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <ModalProvider>
+        <AppContent />
+      </ModalProvider>
+    </ToastProvider>
   );
 }
