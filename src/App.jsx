@@ -14,9 +14,9 @@ import 'leaflet/dist/leaflet.css';
 
 function AppContent() {
   const { position } = useGeolocation();
-  const { showError, toasts, removeToast } = useToast();
+  const { toasts, removeToast } = useToast();
   const { modal } = useModal();
-  const { workouts, sortedWorkouts, workoutsLoaded, handleSortChange } = useWorkouts();
+  const { workouts, sortedWorkouts, workoutsLoaded, handleSortChange, fitAllWorkouts  } = useWorkouts();
   const { 
     formVisible, 
     formType, 
@@ -27,7 +27,6 @@ function AppContent() {
     closeForm 
   } = useForm();
   
-  const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
   return (
@@ -66,6 +65,7 @@ function AppContent() {
               onDeleteWorkout={handleDeleteWorkout}
               onDeleteAllWorkouts={handleDeleteAllWorkouts}
               onSortChange={handleSortChange}
+               onFitAllWorkouts={() => fitAllWorkouts(mapInstanceRef.current?.current)}
             />
             <Map
               mapInstance={mapInstance}

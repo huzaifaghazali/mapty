@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { sortWorkouts } from '../services/sortService.js';
 import { rehydrateWorkouts } from '../services/mapService.js';
+import L from 'leaflet';
 
 const WorkoutContext = createContext();
 
@@ -75,6 +76,19 @@ export function WorkoutProvider({ children }) {
     setSortDirection(direction);
   }, []);
 
+const fitAllWorkouts = useCallback((mapInstance) => {
+  if (!mapInstance || workouts.length === 0) return;
+
+  const group = L.featureGroup();
+  workouts.forEach(workout => {
+    group.addLayer(L.marker(workout.coords));
+  });
+  mapInstance.fitBounds(group.getBounds(), {
+    padding: [50, 50],
+    maxZoom: 13,
+  });
+}, [workouts]);
+
   const value = {
     workouts,
     sortedWorkouts,
@@ -86,6 +100,7 @@ export function WorkoutProvider({ children }) {
     deleteWorkout,
     deleteAllWorkouts,
     handleSortChange,
+    fitAllWorkouts
   };
 
   return (

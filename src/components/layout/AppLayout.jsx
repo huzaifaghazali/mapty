@@ -19,6 +19,7 @@ export function AppLayout({
   onDeleteWorkout,
   onDeleteAllWorkouts,
   onSortChange,
+  onFitAllWorkouts,
 }) {
   return (
     <div className='flex h-[95vh]'>
@@ -45,7 +46,13 @@ export function AppLayout({
 
         {/* Delete All Button */}
         {workouts.length > 0 && (
-          <div className='flex justify-end mb-[1rem]'>
+          <div className='flex justify-between items-center mb-[1rem]'>
+            <button
+              onClick={onFitAllWorkouts}
+              className='px-[1.5rem] py-[0.5rem] bg-brand2 text-white text-[1.4rem] font-medium rounded-[10px] transition-all duration-200 hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-brand2 focus:ring-opacity-50'
+            >
+              Fit All Workouts
+            </button>
             <button
               onClick={onDeleteAllWorkouts}
               className='px-[1.5rem] py-[0.5rem] bg-red-600 text-white text-[1.4rem] font-medium rounded-[10px] transition-all duration-200 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'

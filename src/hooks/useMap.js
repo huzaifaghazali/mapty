@@ -53,7 +53,9 @@ export function useMap(position, onMapClick) {
       if (mapInstance.current) {
         try {
           mapInstance.current.remove();
-        } catch (e) {}
+        } catch (e) {
+          console.log('Map error is: ', e);
+        }
         mapInstance.current = null;
       }
     };
