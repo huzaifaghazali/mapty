@@ -12,21 +12,72 @@ import { FormProvider, useForm } from './contexts/FormContext.jsx';
 import { WorkoutManager } from './components/workout/WorkoutManager.jsx';
 import 'leaflet/dist/leaflet.css';
 
+function ErrorBoundary({ children }) {
+  return <ErrorBoundaryInner>{children}</ErrorBoundaryInner>;
+}
+
+class ErrorBoundaryInner extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    console.log(error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className='flex items-center justify-center h-screen bg-gray-100'>
+          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md'>
+            <h2 className='text-xl font-semibold text-red-600 mb-2'>
+              Something went wrong
+            </h2>
+            <p className='text-gray-600 mb-4'>
+              An unexpected error occurred. Please refresh the page and try
+              again.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600'
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 function AppContent() {
   const { position } = useGeolocation();
   const { toasts, removeToast } = useToast();
   const { modal } = useModal();
-  const { workouts, sortedWorkouts, workoutsLoaded, handleSortChange, fitAllWorkouts  } = useWorkouts();
-  const { 
-    formVisible, 
-    formType, 
-    formValues, 
-    isEditing, 
-    handleTypeChange, 
+  const {
+    workouts,
+    sortedWorkouts,
+    workoutsLoaded,
+    handleSortChange,
+    fitAllWorkouts,
+  } = useWorkouts();
+  const {
+    formVisible,
+    formType,
+    formValues,
+    isEditing,
+    handleTypeChange,
     setValues,
-    closeForm 
+    closeForm,
   } = useForm();
-  
+
   const mapInstanceRef = useRef(null);
 
   return (
@@ -42,7 +93,7 @@ function AppContent() {
           position,
           handleMapClick
         );
-        
+
         // Update the ref with the map instance
         useEffect(() => {
           mapInstanceRef.current = mapInstance;
@@ -65,7 +116,9 @@ function AppContent() {
               onDeleteWorkout={handleDeleteWorkout}
               onDeleteAllWorkouts={handleDeleteAllWorkouts}
               onSortChange={handleSortChange}
-               onFitAllWorkouts={() => fitAllWorkouts(mapInstanceRef.current?.current)}
+              onFitAllWorkouts={() =>
+                fitAllWorkouts(mapInstanceRef.current?.current)
+              }
             />
             <Map
               mapInstance={mapInstance}
@@ -92,14 +145,16 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ModalProvider>
-        <WorkoutProvider>
-          <FormProvider>
-            <AppContent />
-          </FormProvider>
-        </WorkoutProvider>
-      </ModalProvider>
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ModalProvider>
+          <WorkoutProvider>
+            <FormProvider>
+              <AppContent />
+            </FormProvider>
+          </WorkoutProvider>
+        </ModalProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
